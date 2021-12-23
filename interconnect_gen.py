@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# SPDX-License-Identifier: GPL-2.0-only
 
 # Generate mainline interconnect stuff from downstream qcom,msm-bus-device
 # interconnect_gen_ids.h is from downstream include/dt-bindings/msm/msm-bus-ids.h
@@ -20,6 +21,7 @@ DtNode = int
 Phandle = int
 
 
+# FIXME
 header = """// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
@@ -198,7 +200,7 @@ def main():
     with open(sys.argv[2], mode='rb') as f:
         fdt = libfdt.FdtRo(f.read())
 
-    bus_node: int = fdt.path_offset('/soc/ad-hoc-bus')
+    bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
     # as_uint32_array() is technically not correct here but works
     regs_prop = fdt.getprop(bus_node, "reg").as_uint32_array()
@@ -263,6 +265,9 @@ def main():
     # for reg_name in reg_names:
     #     short_name = reg_name.replace("-base", "")
     #     print(f"static struct qcom_icc_bcm *{short_name}_bcms[] = {{")
+
+    # TODO Generate dts
+    # TODO Generate {soc_name}.h
 
 
 if __name__ == '__main__':
