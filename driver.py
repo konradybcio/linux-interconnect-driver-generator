@@ -176,7 +176,7 @@ def generate_bcms(fdt: FdtRo, bus_node: DtNode) -> str:
         name = fdt.get_name(node)
         if name.startswith("bcm-"):
             s += handle_bcm(fdt, bus_node, node)
-    return s
+    return s.strip()
 
 
 def generate_fabs(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> Tuple[str, List[List[str]]]:
@@ -188,7 +188,7 @@ def generate_fabs(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> Tuple[str, Li
             fab_str, icc_nodes = handle_fab(fdt, bus_node, node, soc_model)
             s += fab_str
             all_icc_nodes.append(icc_nodes)
-    return s, all_icc_nodes
+    return s.strip(), all_icc_nodes
 
 
 def generate_qnodes(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> Tuple[str, Set[str]]:
@@ -200,7 +200,7 @@ def generate_qnodes(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> Tuple[str, 
             qnode_str, node_names = handle_qnode(fdt, node, soc_model)
             s += qnode_str
             all_node_names.update(node_names)
-    return s, all_node_names
+    return s.strip(), all_node_names
 
 
 def generate_of_match(reg_names: List[str], soc_model: str) -> str:

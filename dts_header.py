@@ -11,7 +11,7 @@ def generate_defines(icc_nodes: List[List[str]]) -> str:
         for idx, item in enumerate(group):
             s += helpers.pad_with_tabs(f"#define {item}", f"{idx}\n", 5)
         s += "\n"
-    return s
+    return s.strip()
 
 
 def generate_dt_bindings_header(icc_nodes: List[List[str]], options: generator.Options) -> None:

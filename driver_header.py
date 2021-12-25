@@ -10,7 +10,7 @@ def generate_defines(node_names: Set[str]) -> str:
     for idx, name in enumerate(sorted(node_names)):
         s += helpers.pad_with_tabs(f"#define {name}", f"{idx}\n", 6)
     s += "\n"
-    return s
+    return s.strip()
 
 
 def generate_driver_header(node_names: Set[str], options: generator.Options) -> None:
