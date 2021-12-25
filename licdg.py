@@ -27,6 +27,11 @@ def generate(fdt: FdtRo, options: generator.Options) -> None:
     # Generate nodes for arch/arm64/boot/dts/qcom/smXXXX.dtsi
     generate_dts(fdt, options)
 
+    # Things to update manually:
+    # * Documentation/devicetree/bindings/interconnect/qcom,rpmh.yaml
+    # * drivers/interconnect/qcom/Kconfig
+    # * drivers/interconnect/qcom/Makefile
+
 
 parser = argparse.ArgumentParser(
     description="Generate Linux interconnect driver based on (downstream) msm-bus-device device tree")
