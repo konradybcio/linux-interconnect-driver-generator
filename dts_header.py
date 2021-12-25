@@ -1,24 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
-import math
 from typing import List
 
 import generator
-
-TAB_SIZE = 8
-
-
-def pad_with_tabs(string: str, suffix: str, num_tabs: int = 5) -> str:
-    remaining_size = num_tabs * TAB_SIZE - len(string)
-    # print(f"remaining_size = {remaining_size} -- len(string) {len(string)}")
-    num_tabs = math.ceil(remaining_size / TAB_SIZE)
-    return string + "\t"*num_tabs + suffix
+import helpers
 
 
 def generate_defines(icc_nodes: List[List[str]]) -> str:
     s = ""
     for group in icc_nodes:
         for idx, item in enumerate(group):
-            s += pad_with_tabs(f"#define {item}", f"{idx}\n")
+            s += helpers.pad_with_tabs(f"#define {item}", f"{idx}\n", 5)
         s += "\n"
     return s
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
-from typing import List, Tuple
+from typing import List, Tuple, Set
 
 from libfdt import FdtRo
 
@@ -8,7 +8,7 @@ import helpers
 from helpers import DtNode
 
 
-def handle_qnode(fdt: FdtRo, node: DtNode, soc_model: str) -> str:
+def handle_qnode(fdt: FdtRo, node: DtNode, soc_model: str) -> Tuple[str, Set[str]]:
     """
     Transform all mas-* and srv-* nodes into DEFINE_QNODE macro
     """
@@ -37,11 +37,15 @@ def handle_qnode(fdt: FdtRo, node: DtNode, soc_model: str) -> str:
     qnode_name = name[4:].replace("-", "_")
     cell_id_name = helpers.get_cell_id_name(cell_id, soc_model, True)
 
+    node_names: Set[str] = set()
+    node_names.add(cell_id_name)
+    node_names.update(conn_cell_id_names)
+
     if len(conn_cell_id_names) > 0:
         links_str = ", " + ', '.join(conn_cell_id_names)
     else:
         links_str = ""
-    return f"DEFINE_QNODE({qnode_name}, {cell_id_name}, {agg_ports}, {buswidth}{links_str});\n"
+    return f"DEFINE_QNODE({qnode_name}, {cell_id_name}, {agg_ports}, {buswidth}{links_str});\n", node_names
 
 
 def handle_bcm(fdt: FdtRo, bus_node: DtNode, node: DtNode) -> str:
@@ -162,13 +166,16 @@ def generate_fabs(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> Tuple[str, Li
     return s, all_icc_nodes
 
 
-def generate_qnodes(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> str:
+def generate_qnodes(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> Tuple[str, Set[str]]:
     s = ""
+    all_node_names: Set[str] = set()
     for node in fdt.subnodes(bus_node):
         name = fdt.get_name(node)
         if name.startswith("mas-") or name.startswith("slv-"):
-            s += handle_qnode(fdt, node, soc_model)
-    return s
+            qnode_str, node_names = handle_qnode(fdt, node, soc_model)
+            s += qnode_str
+            all_node_names.update(node_names)
+    return s, all_node_names
 
 
 def generate_of_match(reg_names: List[str], soc_model: str) -> str:
@@ -182,7 +189,7 @@ def generate_of_match(reg_names: List[str], soc_model: str) -> str:
     return s
 
 
-def generate_driver(fdt: FdtRo, options: generator.Options) -> List[List[str]]:
+def generate_driver(fdt: FdtRo, options: generator.Options) -> Tuple[List[List[str]], Set[str]]:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
     # as_uint32_array() is technically not correct here but works
@@ -197,6 +204,8 @@ def generate_driver(fdt: FdtRo, options: generator.Options) -> List[List[str]]:
     # print(reg_names)
 
     fabs, icc_nodes = generate_fabs(fdt, bus_node, options.soc_model)
+
+    qnodes, node_names = generate_qnodes(fdt, bus_node, options.soc_model)
 
     with open(f"generated/{options.soc_model}.c", "w") as f:
         f.write(f'''\
@@ -216,7 +225,7 @@ def generate_driver(fdt: FdtRo, options: generator.Options) -> List[List[str]]:
 #include "icc-rpmh.h"
 #include "{options.soc_model}.h"
 
-{generate_qnodes(fdt, bus_node, options.soc_model)}
+{qnodes}
 
 {generate_bcms(fdt, bus_node)}
 
@@ -242,4 +251,4 @@ module_platform_driver(qnoc_driver);
 MODULE_DESCRIPTION(\"Qualcomm {options.soc_model.upper()} NoC driver\");
 MODULE_LICENSE("GPL v2");
 ''')
-    return icc_nodes
+    return icc_nodes, node_names
