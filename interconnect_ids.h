@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
+/* Extracted from dowstream include/dt-bindings/msm/msm-bus-ids.h */
 #define	MSM_BUS_MASTER_AMPSS_M0 1
 #define	MSM_BUS_MASTER_AMPSS_M1 2
 #define	MSM_BUS_APPSS_MASTER_FAB_MMSS 3
@@ -27,7 +29,6 @@
 #define	MSM_BUS_MASTER_JPEG_DEC 27
 #define	MSM_BUS_MASTER_GRAPHICS_2D_CORE0 28
 #define	MSM_BUS_MASTER_VFE 29
-#define	MSM_BUS_MASTER_VFE0 MSM_BUS_MASTER_VFE
 #define	MSM_BUS_MASTER_VPE 30
 #define	MSM_BUS_MASTER_JPEG_ENC 31
 #define	MSM_BUS_MASTER_GRAPHICS_2D_CORE1 32
@@ -268,7 +269,6 @@
 #define	MSM_BUS_PNOC_SLV_11 10075
 
 
-#define	MSM_BUS_SLAVE_FIRST 512
 #define	MSM_BUS_SLAVE_EBI_CH0 512
 #define	MSM_BUS_SLAVE_EBI_CH1 513
 #define	MSM_BUS_SLAVE_AMPSS_L2 514

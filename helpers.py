@@ -4,7 +4,7 @@ from typing import List
 
 from libfdt import FdtRo
 
-import interconnect_gen_ids
+from interconnect_ids import bus_ids
 
 DtNode = int
 Phandle = int
@@ -13,7 +13,7 @@ TAB_SIZE = 8
 
 
 def get_cell_id_name(cell_id: int, soc_model: str, soc_prefix: bool) -> str:
-    name = interconnect_gen_ids.bus_ids[cell_id]
+    name = bus_ids[cell_id]
     return name.replace("MSM_BUS_", f"{soc_model.upper()}_" if soc_prefix else "")
 
 
