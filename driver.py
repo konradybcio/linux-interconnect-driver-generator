@@ -14,6 +14,13 @@ def handle_qnode(fdt: FdtRo, node: DtNode, soc_model: str) -> Tuple[str, Set[str
     """
     name = fdt.get_name(node)
 
+    # Ignore ALC "since it will not be voted from kernel."
+    # https://lore.kernel.org/linux-arm-msm/1e79c73f22c8891dc9f868babd940fca@codeaurora.org/
+    # Ignore _display -- unknown reason
+    if name.endswith("-alc") or name.endswith("_display"):
+        print(f"INFO: handle_qnode: ignoring {name}")
+        return "", set()
+
     cell_id = fdt.getprop(node, "cell-id").as_uint32()
     agg_ports = fdt.getprop(node, "qcom,agg-ports").as_uint32()
     buswidth = fdt.getprop(node, "qcom,buswidth").as_uint32()
@@ -53,6 +60,14 @@ def handle_bcm(fdt: FdtRo, bus_node: DtNode, node: DtNode) -> str:
     Transform all bcm-* nodes into DEFINE_QBCM macro
     """
     name = fdt.get_name(node)
+
+    # Ignore ALC "since it will not be voted from kernel."
+    # https://lore.kernel.org/linux-arm-msm/1e79c73f22c8891dc9f868babd940fca@codeaurora.org/
+    # Ignore _display -- unknown reason
+    if name.endswith("-alc") or name.endswith("_display"):
+        print(f"INFO: handle_bcm: ignoring {name}")
+        return ""
+
     bcm_name = fdt.getprop(node, "qcom,bcm-name").as_str()
 
     name2 = name.replace("-", "_")
@@ -68,7 +83,7 @@ def handle_bcm(fdt: FdtRo, bus_node: DtNode, node: DtNode) -> str:
     keep_alive = "false"  # FIXME
 
     if len(ref_nodes) == 0:
-        print(f"WARN: ignoring BCM {name2}")
+        print(f"WARN: handle_bcm: ignoring {name}")
         return ""
 
     return f"DEFINE_QBCM({name2}, \"{bcm_name}\", {keep_alive}, &{', &'.join(ref_node_names)});\n"
@@ -82,11 +97,14 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
     and more...
     """
     s = ""
-    name = fdt.get_name(node)[4:]
+    name = fdt.get_name(node)
 
+    # Ignore _display FABs -- unknown reason
     if name.endswith("_display"):
-        print(f"WARN: ignoring FAB {name}")
+        print(f"INFO: handle_fab: ignoring {name}")
         return "", []
+
+    name = name[4:]
 
     s += f"static struct qcom_icc_bcm *{name}_bcms[] = {{\n"
     phandle = fdt.get_phandle(node)
@@ -111,6 +129,9 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
         bcm_names.append(bcm_name)
 
     for bcm_name in sorted(bcm_names):
+        if bcm_name == "bcm_alc":
+            print(f"INFO: handle_fab: ignoring {bcm_name}")
+            continue
         s += f"\t&{bcm_name},\n"
 
     s += f'''\
@@ -126,6 +147,10 @@ static struct qcom_icc_node *{name}_nodes[] = {{
 
         node_name = fdt.get_name(node)
         qnode_name = node_name[4:].replace("-", "_")
+
+        if qnode_name == "alc":
+            print(f"INFO: handle_fab: ignoring {qnode_name}")
+            continue
 
         s += f"\t[{idx}] = &{qnode_name},\n"
         icc_node_list.append(idx)
