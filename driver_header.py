@@ -14,7 +14,6 @@ def generate_defines(node_names: Set[str]) -> str:
 
 
 def generate_driver_header(node_names: Set[str], options: generator.Options) -> None:
-    # FIXME use soc_model as directory name?
     with open(f"generated/{options.soc_model}.h", "w") as f:
         f.write(f'''\
 /* SPDX-License-Identifier: GPL-2.0 */

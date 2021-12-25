@@ -14,7 +14,6 @@ from dts_header import generate_dt_bindings_header
 
 
 def generate(fdt: FdtRo, options: generator.Options) -> None:
-    # FIXME use soc_model as directory name?
     if os.path.exists("generated"):
         shutil.rmtree("generated")
     os.mkdir("generated")

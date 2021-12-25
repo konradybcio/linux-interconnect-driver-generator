@@ -10,10 +10,12 @@ from helpers import DtNode
 
 
 # FIXME Some regs and sizes are wrong?
+# This is relevant for *some*... (example from sm8250)
+# 0x1733000 = compute_noc-base 0x1700000 + qcom,base-offset = <208896>;
+# compute_noc: interconnect@1733000 {
 def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
-    # as_uint32_array() is technically not correct for reg but it works here
     regs_prop = fdt.getprop(bus_node, "reg").as_uint32_array()
     reg_names = fdt.getprop(bus_node, "reg-names").as_stringlist()
 
@@ -29,7 +31,6 @@ def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
 
     regs = sorted(regs, key=lambda x: x[0])
 
-    # FIXME use soc_model as directory name?
     with open("generated/interconnect.dtsi", "w") as f:
         for reg, size, reg_name in regs:
             short_name = reg_name.replace("-base", "")

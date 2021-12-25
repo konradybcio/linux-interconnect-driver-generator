@@ -15,7 +15,6 @@ def generate_defines(icc_nodes: List[List[str]]) -> str:
 
 
 def generate_dt_bindings_header(icc_nodes: List[List[str]], options: generator.Options) -> None:
-    # FIXME use soc_model as directory name?
     with open(f"generated/qcom,{options.soc_model}.h", "w") as f:
         f.write(f'''\
 /* SPDX-License-Identifier: GPL-2.0 */

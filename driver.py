@@ -80,7 +80,11 @@ def handle_bcm(fdt: FdtRo, bus_node: DtNode, node: DtNode) -> str:
     ref_node_names = list(map(lambda x: fdt.get_name(x)[4:].replace("-", "_"), ref_nodes))
     # print(f"Got something: &{', &'.join(ref_nodes)}")
 
-    keep_alive = "false"  # FIXME
+    # FIXME Unknown logic behind this
+    # "You can keepalive enabled for SH0, MC0, MM0, SN0 and CN0."
+    # https://lore.kernel.org/linux-arm-msm/1e79c73f22c8891dc9f868babd940fca@codeaurora.org/
+    # git grep "^DEFINE_QBCM" | grep ", true," | cut -d"," -f2 | sort | uniq
+    keep_alive = "false"
 
     if len(ref_nodes) == 0:
         print(f"WARN: handle_bcm: ignoring {name}")
