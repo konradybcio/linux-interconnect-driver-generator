@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
-from typing import List
+from typing import List, Tuple
 
 from libfdt import FdtRo
 
@@ -70,7 +70,7 @@ def handle_bcm(fdt: FdtRo, bus_node: DtNode, node: DtNode) -> str:
     return f"DEFINE_QBCM({name2}, \"{bcm_name}\", {keep_alive}, &{', &'.join(ref_node_names)});\n"
 
 
-def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> str:
+def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tuple[str, List[str]]:
     """
     From all nodes that have e.g. qcom,bus-dev = <&fab_aggre1_noc>; get a set
     of qcom,bcms values and print as struct qcom_icc_bcm
@@ -82,7 +82,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> st
 
     if name.endswith("_display"):
         print(f"WARN: ignoring FAB {name}")
-        return ""
+        return "", []
 
     s += f"static struct qcom_icc_bcm *{name}_bcms[] = {{\n"
     phandle = fdt.get_phandle(node)
@@ -115,6 +115,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> st
 static struct qcom_icc_node *{name}_nodes[] = {{
 '''
 
+    icc_node_list = []
     for node in ref_nodes:
         cell_id = fdt.getprop(node, "cell-id").as_int32()
         idx = helpers.get_cell_id_name(cell_id, soc_model, False)
@@ -123,6 +124,7 @@ static struct qcom_icc_node *{name}_nodes[] = {{
         qnode_name = node_name[4:].replace("-", "_")
 
         s += f"\t[{idx}] = &{qnode_name},\n"
+        icc_node_list.append(idx)
 
     s += f'''\
 }};
@@ -136,7 +138,7 @@ static struct qcom_icc_desc {soc_model}_{name} = {{
 
 '''
 
-    return s
+    return s, icc_node_list
 
 
 def generate_bcms(fdt: FdtRo, bus_node: DtNode) -> str:
@@ -148,13 +150,16 @@ def generate_bcms(fdt: FdtRo, bus_node: DtNode) -> str:
     return s
 
 
-def generate_fabs(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> str:
+def generate_fabs(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> Tuple[str, List[List[str]]]:
     s = ""
+    all_icc_nodes = []
     for node in fdt.subnodes(bus_node):
         name = fdt.get_name(node)
         if name.startswith("fab-"):
-            s += handle_fab(fdt, bus_node, node, soc_model)
-    return s
+            fab_str, icc_nodes = handle_fab(fdt, bus_node, node, soc_model)
+            s += fab_str
+            all_icc_nodes.append(icc_nodes)
+    return s, all_icc_nodes
 
 
 def generate_qnodes(fdt: FdtRo, bus_node: DtNode, soc_model: str) -> str:
@@ -177,7 +182,7 @@ def generate_of_match(reg_names: List[str], soc_model: str) -> str:
     return s
 
 
-def generate_driver(fdt: FdtRo, options: generator.Options) -> None:
+def generate_driver(fdt: FdtRo, options: generator.Options) -> List[List[str]]:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
     # as_uint32_array() is technically not correct here but works
@@ -190,6 +195,8 @@ def generate_driver(fdt: FdtRo, options: generator.Options) -> None:
 
     reg_names = fdt.getprop(bus_node, "reg-names").as_stringlist()
     # print(reg_names)
+
+    fabs, icc_nodes = generate_fabs(fdt, bus_node, options.soc_model)
 
     with open(f"generated/{options.soc_model}.c", "w") as f:
         f.write(f'''\
@@ -213,7 +220,7 @@ def generate_driver(fdt: FdtRo, options: generator.Options) -> None:
 
 {generate_bcms(fdt, bus_node)}
 
-{generate_fabs(fdt, bus_node, options.soc_model)}
+{fabs}
 
 static const struct of_device_id qnoc_of_match[] = {{\
 {generate_of_match(reg_names, options.soc_model)}
@@ -235,3 +242,4 @@ module_platform_driver(qnoc_driver);
 MODULE_DESCRIPTION(\"Qualcomm {options.soc_model.upper()} NoC driver\");
 MODULE_LICENSE("GPL v2");
 ''')
+    return icc_nodes

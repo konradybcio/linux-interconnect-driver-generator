@@ -23,6 +23,7 @@ def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
 
     regs = []
     for i in range(0, len(reg_names)):
+        # tuples are (reg, size, reg_name)
         reg = (regs_prop[i * 2], regs_prop[i * 2 + 1], reg_names[i])
         regs.append(reg)
 

@@ -10,6 +10,7 @@ import generator
 from driver import generate_driver
 from driver_header import generate_driver_header
 from dts import generate_dts
+from dts_header import generate_dt_bindings_header
 
 
 def generate(fdt: FdtRo, options: generator.Options) -> None:
@@ -18,10 +19,14 @@ def generate(fdt: FdtRo, options: generator.Options) -> None:
         shutil.rmtree("generated")
     os.mkdir("generated")
 
-    generate_driver(fdt, options)
+    # Generate drivers/interconnect/qcom/smXXXX.c
+    icc_nodes = generate_driver(fdt, options)
+    # Generate drivers/interconnect/qcom/smXXXX.h
     generate_driver_header(fdt)
+    # Generate include/dt-bindings/interconnect/qcom,smXXXX.h
+    generate_dt_bindings_header(icc_nodes, options)
+    # Generate nodes for arch/arm64/boot/dts/qcom/smXXXX.dtsi
     generate_dts(fdt, options)
-    # TODO generate include/dt-bindings/interconnect/qcom,{options.soc_name}.h
 
 
 parser = argparse.ArgumentParser(
