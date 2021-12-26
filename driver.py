@@ -133,7 +133,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
         bcm_names.append(bcm_name)
 
     for bcm_name in sorted(bcm_names):
-        if bcm_name == "bcm_alc":
+        if bcm_name == "bcm_alc" or bcm_name.endswith("_display"):
             print(f"INFO: handle_fab: ignoring {bcm_name}")
             continue
         s += f"\t&{bcm_name},\n"
@@ -152,7 +152,7 @@ static struct qcom_icc_node *{name}_nodes[] = {{
         node_name = fdt.get_name(node)
         qnode_name = node_name[4:].replace("-", "_")
 
-        if qnode_name == "alc":
+        if qnode_name == "alc" or qnode_name.endswith("_display"):
             print(f"INFO: handle_fab: ignoring {qnode_name}")
             continue
 
