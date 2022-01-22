@@ -16,7 +16,7 @@ from helpers import DtNode
 def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
-    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_array()
+    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_list()
     reg_names = fdt.getprop(bus_node, "reg-names").as_stringlist()
 
     if len(regs_prop) / 2 != len(reg_names):

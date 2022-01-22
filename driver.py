@@ -28,7 +28,7 @@ def handle_qnode(fdt: FdtRo, node: DtNode, soc_model: str) -> Tuple[str, Set[str
     if connections_prop is None:
         connections = []
     else:
-        connections = connections_prop.as_uint32_array()
+        connections = connections_prop.as_uint32_list()
 
     # if connections is None:
     #     print(f"WARN: ignoring node {name}")
@@ -119,7 +119,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
         bcms_prop = fdt.getprop_or_none(node, "qcom,bcms")
         bcms = []
         if bcms_prop is not None:
-            bcms = bcms_prop.as_uint32_array()
+            bcms = bcms_prop.as_uint32_list()
         for bcm in bcms:
             bcms_set.add(bcm)
 
@@ -221,8 +221,7 @@ def generate_of_match(reg_names: List[str], soc_model: str) -> str:
 def generate_driver(fdt: FdtRo, options: generator.Options) -> Tuple[List[List[str]], Set[str]]:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
-    # as_uint32_array() is technically not correct here but works
-    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_array()
+    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_list()
     regs = []
     for i in range(0, int(len(regs_prop) / 2)):
         reg = (regs_prop[i * 2], regs_prop[i * 2 + 1])
