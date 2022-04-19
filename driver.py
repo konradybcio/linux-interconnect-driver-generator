@@ -110,6 +110,33 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
 
     name = name[4:]
 
+    qos_offset = None
+    qos_offset_prop = fdt.getprop_or_none(node, "qcom,base-offset")
+    if qos_offset_prop is not None:
+        qos_offset = hex(qos_offset_prop.as_int32())
+    # print(f"QOS offset {name} = {qos_offset}")
+
+    bus_type_prop = fdt.getprop_or_none(node, "qcom,bus-type")
+    if bus_type_prop is not None:
+        bus_type = bus_type_prop.as_int32()
+        if bus_type == 1:
+            bus_type = "QCOM_ICC_NOC"
+        elif bus_type == 2:
+            bus_type = "QCOM_ICC_BIMC"
+        elif bus_type == 3:
+            bus_type = "QCOM_ICC_QNOC"
+        else:
+            raise RuntimeError(f"Unhandled bus type (enum qcom_icc_type): {bus_type}")
+    else:
+        # Default type is NOC
+        bus_type = "QCOM_ICC_NOC"
+
+    clocks_prop = fdt.getprop_or_none(node, "clocks")
+    if clocks_prop:
+        clocks = clocks_prop.as_int32_list()
+        if len(clocks) > 0:
+            raise RuntimeError(f"Clocks are currently not handled in dts: {clocks}")
+
     s += f"static struct qcom_icc_bcm *{name}_bcms[] = {{\n"
     phandle = fdt.get_phandle(node)
     ref_nodes = helpers.find_subnodes_referencing_phandle(fdt, bus_node, phandle, "qcom,bus-dev")
@@ -163,10 +190,17 @@ static struct qcom_icc_node *{name}_nodes[] = {{
 }};
 
 static struct qcom_icc_desc {soc_model}_{name} = {{
+\t.type = {bus_type},
 \t.nodes = {name}_nodes,
 \t.num_nodes = ARRAY_SIZE({name}_nodes),
 \t.bcms = {name}_bcms,
 \t.num_bcms = ARRAY_SIZE({name}_bcms),
+'''
+
+    if qos_offset:
+        s += f'\t.qos_offset = {qos_offset},\n'
+
+    s += f'''\
 }};
 
 '''
@@ -271,7 +305,7 @@ static struct platform_driver qnoc_driver = {{
 \t.driver = {{
 \t\t.name = \"qnoc-{options.soc_model}\",
 \t\t.of_match_table = qnoc_of_match,
-\t\t.sync_state = icc_sync_state,
+\t\t.sync_state = icc_sync_state, // FIXME Could break?
 \t}},
 }};
 module_platform_driver(qnoc_driver);
