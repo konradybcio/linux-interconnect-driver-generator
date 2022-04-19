@@ -38,7 +38,7 @@ def separate_nocs(nocs):
     return main_noc, child_nocs
 
 
-# FIXME Some regs and sizes are wrong?
+# Potentially some regs and sizes are wrong?
 # This is relevant for *some*... (example from sm8250)
 # 0x1733000 = compute_noc-base 0x1700000 + qcom,base-offset = <208896>;
 # compute_noc: interconnect@1733000 {
