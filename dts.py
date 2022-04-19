@@ -72,21 +72,21 @@ def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
             short_name = main_noc.reg_name.replace("-base", "")
             f.write(f'''\
 {short_name}: interconnect@{'{:x}'.format(main_noc.reg)} {{
-	compatible = "qcom,{options.soc_model}-{short_name.replace("_", "-")}";
-	reg = <0 0x{'{:08x}'.format(main_noc.reg)} 0 {hex(main_noc.size)}>;
-	#interconnect-cells = <1>;
-	qcom,bcm-voters = <&apps_bcm_voter>;
+\tcompatible = "qcom,{options.soc_model}-{short_name.replace("_", "-")}";
+\treg = <0 0x{'{:08x}'.format(main_noc.reg)} 0 {hex(main_noc.size)}>;
+\t#interconnect-cells = <1>;
+\tqcom,bcm-voters = <&apps_bcm_voter>;
 ''')
 
             for child_noc in child_nocs:
                 short_name = child_noc.reg_name.replace("-base", "")
                 f.write(f'''\
 
-	{short_name}: interconnect-{short_name.replace("_virt", "").replace("_", "-")} {{
-		compatible = "qcom,{options.soc_model}-{short_name.replace("_", "-")}";
-		#interconnect-cells = <1>;
-		qcom,bcm-voters = <&apps_bcm_voter>;
-	}};
+\t{short_name}: interconnect-{short_name.replace("_virt", "").replace("_", "-")} {{
+\t\tcompatible = "qcom,{options.soc_model}-{short_name.replace("_", "-")}";
+\t\t#interconnect-cells = <1>;
+\t\tqcom,bcm-voters = <&apps_bcm_voter>;
+\t}};
 ''')
 
             f.write(f'''\
