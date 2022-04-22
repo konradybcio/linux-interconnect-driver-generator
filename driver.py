@@ -15,9 +15,11 @@ def handle_qnode(fdt: FdtRo, node: DtNode, soc_model: str) -> Tuple[str, Set[str
     name = fdt.get_name(node)
 
     # Ignore ALC "since it will not be voted from kernel."
-    # https://lore.kernel.org/linux-arm-msm/1e79c73f22c8891dc9f868babd940fca@codeaurora.org/
+    #   https://lore.kernel.org/linux-arm-msm/1e79c73f22c8891dc9f868babd940fca@codeaurora.org/
+    # Ignore IP0 since it's handled by clk framework
+    #   https://lore.kernel.org/linux-arm-msm/20220412220033.1273607-1-swboyd@chromium.org/
     # Ignore _display -- unknown reason
-    if name.endswith("-alc") or name.endswith("_display"):
+    if name.endswith("-alc") or "-ipa-core-" in name or name.endswith("_display"):
         print(f"INFO: handle_qnode: ignoring {name}")
         return "", set()
 
@@ -62,9 +64,11 @@ def handle_bcm(fdt: FdtRo, bus_node: DtNode, node: DtNode) -> str:
     name = fdt.get_name(node)
 
     # Ignore ALC "since it will not be voted from kernel."
-    # https://lore.kernel.org/linux-arm-msm/1e79c73f22c8891dc9f868babd940fca@codeaurora.org/
+    #   https://lore.kernel.org/linux-arm-msm/1e79c73f22c8891dc9f868babd940fca@codeaurora.org/
+    # Ignore IP0 since it's handled by clk framework
+    #   https://lore.kernel.org/linux-arm-msm/20220412220033.1273607-1-swboyd@chromium.org/
     # Ignore _display -- unknown reason
-    if name.endswith("-alc") or name.endswith("_display"):
+    if name.endswith("-alc") or name.endswith("-ip0") or name.endswith("_display"):
         print(f"INFO: handle_bcm: ignoring {name}")
         return ""
 
@@ -160,7 +164,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
         bcm_names.append(bcm_name)
 
     for bcm_name in sorted(bcm_names):
-        if bcm_name == "bcm_alc" or bcm_name.endswith("_display"):
+        if bcm_name == "bcm_alc" or bcm_name == "bcm_ip0" or bcm_name.endswith("_display"):
             print(f"INFO: handle_fab: ignoring {bcm_name}")
             continue
         s += f"\t&{bcm_name},\n"
@@ -179,7 +183,7 @@ static struct qcom_icc_node *{name}_nodes[] = {{
         node_name = fdt.get_name(node)
         qnode_name = node_name[4:].replace("-", "_")
 
-        if qnode_name == "alc" or qnode_name.endswith("_display"):
+        if qnode_name == "alc" or qnode_name.startswith("ipa_core_") or qnode_name.endswith("_display"):
             print(f"INFO: handle_fab: ignoring {qnode_name}")
             continue
 
