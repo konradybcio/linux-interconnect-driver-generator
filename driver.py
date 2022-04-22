@@ -117,7 +117,11 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
     qos_offset = None
     qos_offset_prop = fdt.getprop_or_none(node, "qcom,base-offset")
     if qos_offset_prop is not None:
-        qos_offset = hex(qos_offset_prop.as_int32())
+        qos_offset = qos_offset_prop.as_int32()
+        if qos_offset != 0:
+            qos_offset = hex(qos_offset)
+        else:
+            qos_offset = None
     # print(f"QOS offset {name} = {qos_offset}")
 
     bus_type_prop = fdt.getprop_or_none(node, "qcom,bus-type")
@@ -194,15 +198,17 @@ static struct qcom_icc_node *{name}_nodes[] = {{
 }};
 
 static struct qcom_icc_desc {soc_model}_{name} = {{
-\t.type = {bus_type},
 \t.nodes = {name}_nodes,
 \t.num_nodes = ARRAY_SIZE({name}_nodes),
 \t.bcms = {name}_bcms,
 \t.num_bcms = ARRAY_SIZE({name}_bcms),
 '''
+    # RPMH driver currently doesn't support .type
+    # \t.type = {bus_type},
 
-    if qos_offset:
-        s += f'\t.qos_offset = {qos_offset},\n'
+    # RPMH driver currently doesn't support .qos_offset
+    # if qos_offset:
+    #     s += f'\t.qos_offset = {qos_offset},\n'
 
     s += f'''\
 }};
@@ -309,7 +315,7 @@ static struct platform_driver qnoc_driver = {{
 \t.driver = {{
 \t\t.name = \"qnoc-{options.soc_model}\",
 \t\t.of_match_table = qnoc_of_match,
-\t\t.sync_state = icc_sync_state, // FIXME Could break?
+\t\t.sync_state = icc_sync_state,
 \t}},
 }};
 module_platform_driver(qnoc_driver);
