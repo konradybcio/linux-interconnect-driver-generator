@@ -145,7 +145,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
         if len(clocks) > 0:
             raise RuntimeError(f"Clocks are currently not handled in dts: {clocks}")
 
-    s += f"static struct qcom_icc_bcm *{name}_bcms[] = {{\n"
+    s += f"static struct qcom_icc_bcm * const {name}_bcms[] = {{\n"
     phandle = fdt.get_phandle(node)
     ref_nodes = helpers.find_subnodes_referencing_phandle(fdt, bus_node, phandle, "qcom,bus-dev")
 
@@ -176,7 +176,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str) -> Tu
     s += f'''\
 }};
 
-static struct qcom_icc_node *{name}_nodes[] = {{
+static struct qcom_icc_node * const {name}_nodes[] = {{
 '''
 
     icc_node_list = []
@@ -197,7 +197,7 @@ static struct qcom_icc_node *{name}_nodes[] = {{
     s += f'''\
 }};
 
-static struct qcom_icc_desc {soc_model}_{name} = {{
+static const struct qcom_icc_desc {soc_model}_{name} = {{
 \t.nodes = {name}_nodes,
 \t.num_nodes = ARRAY_SIZE({name}_nodes),
 \t.bcms = {name}_bcms,
