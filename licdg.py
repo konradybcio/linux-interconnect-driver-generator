@@ -19,13 +19,13 @@ def generate(fdt: FdtRo, options: generator.Options) -> None:
     os.mkdir("generated")
 
     # Generate drivers/interconnect/qcom/smXXXX.c
-    icc_nodes, node_names = generate_driver(fdt, options)
+    icc_nodes, node_names, is_smd = generate_driver(fdt, options)
     # Generate drivers/interconnect/qcom/smXXXX.h
     generate_driver_header(node_names, options)
     # Generate include/dt-bindings/interconnect/qcom,smXXXX.h
     generate_dt_bindings_header(icc_nodes, options)
     # Generate nodes for arch/arm64/boot/dts/qcom/smXXXX.dtsi
-    generate_dts(fdt, options)
+    generate_dts(fdt, options, is_smd)
 
     # Things to update manually:
     # * Documentation/devicetree/bindings/interconnect/qcom,rpmh.yaml

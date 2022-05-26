@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
+from datetime import date
 from typing import List
 
 import generator
@@ -21,7 +22,7 @@ def generate_dt_bindings_header(icc_nodes: List[List[str]], options: generator.O
 /*
  * Qualcomm {options.soc_model.upper()} interconnect IDs
  *
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) {date.today().year}, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __DT_BINDINGS_INTERCONNECT_QCOM_{options.soc_model.upper()}_H

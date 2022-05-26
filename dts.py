@@ -42,7 +42,7 @@ def separate_nocs(nocs):
 # This is relevant for *some*... (example from sm8250)
 # 0x1733000 = compute_noc-base 0x1700000 + qcom,base-offset = <208896>;
 # compute_noc: interconnect@1733000 {
-def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
+def generate_dts(fdt: FdtRo, options: generator.Options, is_smd: bool) -> None:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
     regs_prop = fdt.getprop(bus_node, "reg").as_uint32_list()
@@ -70,7 +70,17 @@ def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
             main_noc = main_noc[0]
 
             short_name = main_noc.reg_name.replace("-base", "")
-            f.write(f'''\
+            if is_smd:
+                f.write(f'''\
+{short_name}: interconnect@{'{:x}'.format(main_noc.reg)} {{
+\tcompatible = "qcom,{options.soc_model}-{short_name.replace("_", "-")}";
+\treg = <0 0x{'{:08x}'.format(main_noc.reg)} 0 {hex(main_noc.size)}>;
+\tclocks = <FILLME1>, <FILLME2>;
+\tclock-names = "bus", "bus_a";
+\t#interconnect-cells = <1>;
+''')
+            else:
+                f.write(f'''\
 {short_name}: interconnect@{'{:x}'.format(main_noc.reg)} {{
 \tcompatible = "qcom,{options.soc_model}-{short_name.replace("_", "-")}";
 \treg = <0 0x{'{:08x}'.format(main_noc.reg)} 0 {hex(main_noc.size)}>;
@@ -78,9 +88,9 @@ def generate_dts(fdt: FdtRo, options: generator.Options) -> None:
 \tqcom,bcm-voters = <&apps_bcm_voter>;
 ''')
 
-            for child_noc in child_nocs:
-                short_name = child_noc.reg_name.replace("-base", "")
-                f.write(f'''\
+                for child_noc in child_nocs:
+                    short_name = child_noc.reg_name.replace("-base", "")
+                    f.write(f'''\
 
 \t{short_name}: interconnect-{short_name.replace("_virt", "").replace("_", "-")} {{
 \t\tcompatible = "qcom,{options.soc_model}-{short_name.replace("_", "-")}";

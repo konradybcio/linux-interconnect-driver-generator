@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
+from datetime import date
 from typing import Set
 
 import generator
@@ -20,7 +21,7 @@ def generate_driver_header(node_names: Set[str], options: generator.Options) -> 
 /*
  * Qualcomm #define {options.soc_model.upper()} interconnect IDs
  *
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) {date.today().year}, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __DRIVERS_INTERCONNECT_QCOM_{options.soc_model.upper()}_H
