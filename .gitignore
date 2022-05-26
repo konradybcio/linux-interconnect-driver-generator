@@ -3,3 +3,4 @@
 *.dtb
 *.dts
 *.dtsi
+*.patch
