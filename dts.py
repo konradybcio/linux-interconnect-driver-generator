@@ -35,6 +35,12 @@ def separate_nocs(nocs):
         print("INFO: separate_nocs: Moving compute_noc as child of aggre2_noc")
         child_nocs.append(main_noc.pop())
 
+    if len(main_noc) == 2 and \
+            main_noc[0].reg_name == "sys_noc-base" and \
+            main_noc[1].reg_name == "fab-gpu_vert-base":
+        print("INFO: separate_nocs: Moving fab-gpu_vert-base as child of sys_noc-base")
+        child_nocs.append(main_noc.pop())
+
     return main_noc, child_nocs
 
 
@@ -45,7 +51,7 @@ def separate_nocs(nocs):
 def generate_dts(fdt: FdtRo, options: generator.Options, is_smd: bool) -> None:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
-    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_list()
+    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_array()
     reg_names = fdt.getprop(bus_node, "reg-names").as_stringlist()
 
     if len(regs_prop) / 2 != len(reg_names):

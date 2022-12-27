@@ -10,17 +10,22 @@ from helpers import DtNode
 def str_or_default(x, val):
     if x is None:
         return val
-    return x
+    return x.as_str()
 
 def int_or_default(x, val):
     if x is None:
         return val
     return x.as_uint32()
 
+def bool_or_default(x, val):
+    if x is None:
+        return val
+    return not not x
+
 def int_list_or_default(x, val):
     if x is None:
         return val
-    return x.as_uint32_list()
+    return x.as_uint32_array()
 
 def handle_qnode_rpmh(fdt: FdtRo, node: DtNode, soc_model: str) -> Tuple[str, Set[str]]:
     """
@@ -44,7 +49,7 @@ def handle_qnode_rpmh(fdt: FdtRo, node: DtNode, soc_model: str) -> Tuple[str, Se
     if connections_prop is None:
         connections = []
     else:
-        connections = connections_prop.as_uint32_list()
+        connections = connections_prop.as_uint32_array()
 
     # if connections is None:
     #     print(f"WARN: ignoring node {name}")
@@ -95,9 +100,8 @@ def handle_qnode_smd(fdt: FdtRo, node: DtNode, soc_model: str) -> Tuple[str, Set
     cell_id = fdt.getprop(node, "cell-id").as_uint32()
     mas_rpm_id = int_or_default(fdt.getprop_or_none(node, "qcom,mas-rpm-id"), -1)
     slv_rpm_id = int_or_default(fdt.getprop_or_none(node, "qcom,slv-rpm-id"), -1)
-    ap_owned = str_or_default(fdt.getprop_or_none(node, "qcom,ap-owned"), "false")
-    if ap_owned not in ["true", "false"]:
-        ap_owned = "false"
+    ap_owned = bool(fdt.getprop_or_none(node, "qcom,ap-owned") is not None)
+    ap_owned = "true" if ap_owned else "false"
     qos_mode = str_or_default(fdt.getprop_or_none(node, "qcom,qos-mode"), -1)
     if qos_mode == "fixed":
         qos_mode = "NOC_QOS_MODE_FIXED"
@@ -239,7 +243,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str, is_sm
 
     clocks_prop = fdt.getprop_or_none(node, "clocks")
     if clocks_prop:
-        clocks = clocks_prop.as_int32_list()
+        clocks = clocks_prop.as_int32_array()
         if len(clocks) > 0:
             print(f"NOTICE: Clocks are currently not handled in dts: {clocks}")
 
@@ -253,7 +257,7 @@ def handle_fab(fdt: FdtRo, bus_node: DtNode, node: DtNode, soc_model: str, is_sm
             bcms_prop = fdt.getprop_or_none(node, "qcom,bcms")
             bcms = []
             if bcms_prop is not None:
-                bcms = bcms_prop.as_uint32_list()
+                bcms = bcms_prop.as_uint32_array()
             for bcm in bcms:
                 bcms_set.add(bcm)
 
@@ -343,6 +347,7 @@ def generate_qnodes(fdt: FdtRo, bus_node: DtNode, soc_model: str, is_smd: bool) 
     handle_qnode = handle_qnode_smd if is_smd else handle_qnode_rpmh
     for node in fdt.subnodes(bus_node):
         name = fdt.get_name(node)
+        print(f"time for {name}")
         if name.startswith("mas-") or name.startswith("slv-"):
             qnode_str, node_names = handle_qnode(fdt, node, soc_model)
             s += qnode_str
@@ -363,7 +368,7 @@ def generate_of_match(reg_names: List[str], soc_model: str) -> str:
 def generate_driver(fdt: FdtRo, options: generator.Options) -> Tuple[List[List[str]], Set[str]]:
     bus_node: DtNode = fdt.path_offset('/soc/ad-hoc-bus')
 
-    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_list()
+    regs_prop = fdt.getprop(bus_node, "reg").as_uint32_array()
     regs = []
     for i in range(0, int(len(regs_prop) / 2)):
         reg = (regs_prop[i * 2], regs_prop[i * 2 + 1])

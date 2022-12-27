@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
-from typing import Optional, Iterator
+import struct
+from typing import List, Any, Optional, Iterator
 
 import libfdt
 from libfdt import FDT_ERR_NOTFOUND, Property
@@ -16,6 +17,28 @@ def fdt_subnodes(self: libfdt.FdtRo, parent: DtNode) -> Iterator[DtNode]:
 
 libfdt.FdtRo.subnodes = fdt_subnodes
 
+# not pretty extensions
+def fdt_as_array(self: libfdt.Property, fmt: str) -> List[Any]:
+    unpack_iter = struct.iter_unpack('>' + fmt, self)
+    ret = []
+    for val in unpack_iter:
+        ret.append(val[0])
+    return ret
+
+
+def fdt_as_int32_array(self: libfdt.Property) -> List[int]:
+    return self.as_array('l')
+
+
+def fdt_as_uint32_array(self: libfdt.Property) -> List[int]:
+    return self.as_array('L')
+
+
+def fdt_as_stringlist(self: libfdt.Property) -> List[str]:
+    if self[-1] != 0:
+        raise ValueError('Property lacks nul termination')
+    parts = self[:-1].split(b'\x00')
+    return list(map(lambda x: x.decode('utf-8'), parts))
 
 def fdt_getprop_or_none(self: libfdt.FdtRo, nodeoffset, prop_name) -> Optional[Property]:
     prop = self.getprop(nodeoffset, prop_name, [FDT_ERR_NOTFOUND])
@@ -24,4 +47,8 @@ def fdt_getprop_or_none(self: libfdt.FdtRo, nodeoffset, prop_name) -> Optional[P
     return prop
 
 
+libfdt.Property.as_array = fdt_as_array
+libfdt.Property.as_int32_array = fdt_as_int32_array
+libfdt.Property.as_uint32_array = fdt_as_uint32_array
+libfdt.Property.as_stringlist = fdt_as_stringlist
 libfdt.FdtRo.getprop_or_none = fdt_getprop_or_none

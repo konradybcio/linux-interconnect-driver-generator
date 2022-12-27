@@ -25,7 +25,7 @@ def find_subnodes_referencing_phandle(fdt: FdtRo, bus_node: DtNode,
         prop = fdt.getprop_or_none(node, prop_name)
         if prop is None:
             continue
-        values = prop.as_uint32_list()
+        values = prop.as_uint32_array()
         if phandle in values:
             nodes.append(node)
 
